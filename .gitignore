@@ -1,0 +1,20 @@
+# API Secrets
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environments
+venv/
+.venv/
+
+# Android / Build
+build/
+dist/
+
+# Editors
+*.swp
+*.swo
