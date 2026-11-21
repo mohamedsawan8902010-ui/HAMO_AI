@@ -1,75 +1,75 @@
-import json
+"""Google Gemini provider (generateContent REST API).
+
+Live-tested by the project owner with model gemini-3.5-flash-lite.
+Provider interface:  generate(system, turns) -> str
+  system: system instruction text (may be empty)
+  turns:  [{"role": "user" | "assistant", "text": "..."}], first and last are "user"
+"""
+
 import os
-import urllib.request
-import urllib.error
-from dotenv import load_dotenv
-from pathlib import Path
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+import re
 
-API_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-3.5-flash-lite:generateContent"
-)
+from .base import ProviderError, load_env, post_json
+
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
+_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
+_MODEL_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
-def generate_reply(message):
-    api_key = os.getenv("GEMINI_API_KEY")
+def _model_name():
+    name = (os.getenv("GEMINI_MODEL") or DEFAULT_MODEL).strip()
+    if not _MODEL_RE.match(name):
+        raise ProviderError("اسم نموذج Gemini في ملف .env غير صالح.", 503,
+                            f"invalid GEMINI_MODEL={name!r}")
+    return name
 
+
+def generate(system, turns):
+    load_env()
+    api_key = (os.getenv("GEMINI_API_KEY") or "").strip()
     if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not configured")
-
-    if not isinstance(message, str) or not message.strip():
-        raise ValueError("Message cannot be empty")
+        raise ProviderError(
+            "مفتاح GEMINI_API_KEY غير مُعدّ. أضِفه إلى ملف .env ثم أعد تشغيل الخادم.",
+            503, "GEMINI_API_KEY is missing")
 
     payload = {
         "contents": [
             {
-                "parts": [
-                    {"text": message.strip()}
-                ]
+                "role": "user" if turn["role"] == "user" else "model",
+                "parts": [{"text": turn["text"]}],
             }
+            for turn in turns
         ]
     }
+    if system:
+        payload["system_instruction"] = {"parts": [{"text": system}]}
 
-    request = urllib.request.Request(
-        API_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": api_key
-        },
-        method="POST"
+    result = post_json(
+        f"{_BASE_URL}{_model_name()}:generateContent",
+        payload,
+        {"x-goog-api-key": api_key},
     )
 
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            result = json.loads(response.read().decode("utf-8"))
-
-    except urllib.error.HTTPError as error:
-        error_body = error.read().decode("utf-8", errors="replace")
-        raise RuntimeError(
-            f"Gemini API error ({error.code}): {error_body}"
-        ) from None
-
-    except urllib.error.URLError as error:
-        raise RuntimeError(
-            f"Network error: {error.reason}"
-        ) from None
-
-    candidates = result.get("candidates", [])
-
+    candidates = result.get("candidates") or []
     if not candidates:
-        raise RuntimeError("Gemini returned no response")
+        block = (result.get("promptFeedback") or {}).get("blockReason")
+        raise ProviderError("رفض المزوّد الإجابة عن هذه الرسالة. جرّب صياغة أخرى.", 502,
+                            f"no candidates, blockReason={block}")
 
-    parts = candidates[0].get("content", {}).get("parts", [])
-
-    reply = "\n".join(
-        part.get("text", "")
-        for part in parts
-        if isinstance(part.get("text"), str)
+    parts = (candidates[0].get("content") or {}).get("parts") or []
+    text = "\n".join(
+        part["text"] for part in parts
+        if isinstance(part.get("text"), str) and not part.get("thought")
     ).strip()
+    if not text:
+        raise ProviderError("لم يُرجع المزوّد نصًا لهذه الرسالة. جرّب إعادة صياغتها.", 502,
+                            f"empty text, finishReason={candidates[0].get('finishReason')}")
+    return text
 
-    if not reply:
-        raise RuntimeError("Gemini returned no text")
 
-    return reply
+def generate_reply(message, system=None, history=None):
+    """Convenience wrapper (kept for the old CLI smoke test)."""
+    if not isinstance(message, str) or not message.strip():
+        raise ValueError("Message cannot be empty")
+    turns = list(history or []) + [{"role": "user", "text": message.strip()}]
+    return generate(system or "", turns)

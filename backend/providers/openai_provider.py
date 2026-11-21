@@ -1,71 +1,43 @@
+"""OpenAI provider (Responses API) -- EXPERIMENTAL, NOT TESTED.
 
-import json
+Needs OPENAI_API_KEY and OPENAI_MODEL in .env. There is deliberately no default
+model: model names change, so set one you have verified in your OpenAI account.
+Enable with HAMO_PROVIDER=openai.
+"""
+
 import os
-import urllib.request
-import urllib.error
 
+from .base import ProviderError, load_env, post_json
 
 API_URL = "https://api.openai.com/v1/responses"
 
-MODEL = os.getenv(
-    "OPENAI_MODEL",
-    "gpt-6.2-astra"
-)
 
-
-def generate_reply(message):
-    api_key = os.getenv("OPENAI_API_KEY")
-
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not configured")
-
-    if not isinstance(message, str) or not message.strip():
-        raise ValueError("Message cannot be empty")
+def generate(system, turns):
+    load_env()
+    api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+    model = (os.getenv("OPENAI_MODEL") or "").strip()
+    if not api_key or not model:
+        raise ProviderError(
+            "إعدادات OpenAI ناقصة. أضِف OPENAI_API_KEY و OPENAI_MODEL إلى ملف .env.",
+            503, "OPENAI_API_KEY or OPENAI_MODEL is missing")
 
     payload = {
-        "model": MODEL,
-        "input": message.strip()
+        "model": model,
+        "input": [{"role": t["role"], "content": t["text"]} for t in turns],
     }
+    if system:
+        payload["instructions"] = system
 
-    request = urllib.request.Request(
-        API_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        },
-        method="POST"
-    )
+    result = post_json(API_URL, payload, {"Authorization": f"Bearer {api_key}"})
 
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            result = json.loads(response.read().decode("utf-8"))
-
-    except urllib.error.HTTPError as error:
-        error_body = error.read().decode("utf-8", errors="replace")
-        raise RuntimeError(
-            f"OpenAI API error ({error.code}): {error_body}"
-        ) from None
-
-    except urllib.error.URLError as error:
-        raise RuntimeError(
-            f"Network error: {error.reason}"
-        ) from None
-
-    output_text = []
-
-    for item in result.get("output", []):
+    chunks = []
+    for item in result.get("output") or []:
         if item.get("type") != "message":
             continue
-
-        for content in item.get("content", []):
+        for content in item.get("content") or []:
             if content.get("type") == "output_text":
-                output_text.append(content.get("text", ""))
-
-    reply = "\n".join(output_text).strip()
-
-    if not reply:
-        raise RuntimeError("The model returned no text")
-
-    return reply
-
+                chunks.append(content.get("text", ""))
+    text = "\n".join(chunks).strip()
+    if not text:
+        raise ProviderError("لم يُرجع المزوّد نصًا لهذه الرسالة.", 502, "empty OpenAI output")
+    return text

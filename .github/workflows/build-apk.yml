@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to publish the APK as a release
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Pinned: Android Gradle Plugin 8.7.x requires Gradle 8.9+ and JDK 17.
+      - name: Install Gradle 8.9
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o "$RUNNER_TEMP/gradle.zip"
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$HOME"
+          echo "$HOME/gradle-8.9/bin" >> "$GITHUB_PATH"
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Build debug APK
+        working-directory: android
+        run: gradle --no-daemon --stacktrace -PhamoVersionCode=${{ github.run_number }} assembleDebug
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk HAMO-AI.apk
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: HAMO-AI-apk
+          path: HAMO-AI.apk
+
+      # Convenience: a direct, unzipped APK download on the Releases page (ideal for a phone).
+      - name: Publish as the latest release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest HAMO-AI.apk --target "$GITHUB_SHA" \
+            --title "HAMO AI (latest build)" \
+            --notes "Debug build #${{ github.run_number }} from commit ${GITHUB_SHA::7}"

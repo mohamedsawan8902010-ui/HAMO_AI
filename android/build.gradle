@@ -1,0 +1,4 @@
+plugins {
+    // Pinned on purpose: AGP 8.7.x needs Gradle 8.9+ and JDK 17 (see .github/workflows/build-apk.yml).
+    id 'com.android.application' version '8.7.3' apply false
+}

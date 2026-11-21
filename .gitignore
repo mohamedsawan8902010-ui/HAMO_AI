@@ -1,19 +1,27 @@
-# API Secrets
+# API secrets
 .env
 .env.*
+!.env.example
 
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
 
-# Virtual Environments
+# Virtual environments
 venv/
 .venv/
 
-# Android / Build
+# Android / build output
 build/
 dist/
+.gradle/
+.idea/
+local.properties
+*.apk
+*.aab
+.cxx/
+captures/
 
 # Editors
 *.swp
