@@ -1,12 +1,25 @@
-# HAMO AI
+<img src="docs/assets/logo.svg" alt="HAMO AI" width="420">
+
+[![Build Android APK](https://github.com/mohamedsawan8902010-ui/HAMO_AI/actions/workflows/build-apk.yml/badge.svg)](https://github.com/mohamedsawan8902010-ui/HAMO_AI/actions/workflows/build-apk.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-536DFE.svg)](CHANGELOG.md)
+[![Live demo](https://img.shields.io/badge/demo-live-39d98a.svg)](https://mohamedsawan8902010-ui.github.io/HAMO_AI/)
 
 An Arabic educational AI assistant for Android students. Copy a paragraph from any study page, tap the floating **H** button over Chrome, paste it, and get an explanation, summary, examples or a quiz without leaving the page.
 
-**Version 0.2.0** -- see [Status](#status) for exactly what is verified and what is not.
+**[Try the live UI demo](https://mohamedsawan8902010-ui.github.io/HAMO_AI/)** -- static sample replies, no backend or API key needed. The real app talks to Google Gemini; see [Status](#status) for exactly what is verified and what is not. A one-page write-up for applications/resumes is in [docs/PORTFOLIO.md](docs/PORTFOLIO.md).
 
 ## The problem
 
 While reading a lecture or a lesson, a student hits a rule, a term or a question they do not understand and has to leave the page to search for help. HAMO AI puts the explanation on top of the page they are studying.
+
+## Highlights
+
+- Audited and closed a CORS misconfiguration in the inherited prototype that let any open web page spend the project's AI quota (details in [docs/AUDIT.md](docs/AUDIT.md)).
+- Hand-written escaping Markdown renderer: AI output becomes formatted HTML with no raw-HTML or link injection possible.
+- One `generate(system, turns)` provider interface behind Gemini, OpenAI and a Mock implementation -- adding a new model is one file.
+- 26 backend tests + 27 headless-browser UI tests, plus a GitHub Actions pipeline that builds a signed Android APK on every push.
+- Full write-up: [docs/PORTFOLIO.md](docs/PORTFOLIO.md).
 
 ## Status
 
@@ -16,7 +29,7 @@ While reading a lecture or a lesson, a student hits a rule, a term or a question
 | Gemini provider | Live-tested by the project owner (`gemini-3.5-flash-lite`); not re-run in automated tests |
 | Web UI (modes, history, Markdown, copy/paste, errors) | Verified in headless Chromium at phone size (mock provider) |
 | Educational modes (explain, summarize, simplify, examples, quiz, step by step) | Implemented; answer quality with live Gemini needs human review |
-| Android app: control screen, in-app chat, floating button + panel | **Written, not yet built or tested on a device** |
+| Android app: control screen, in-app chat, floating button + panel | Built by CI and confirmed running on the owner's phone (floating button over Chrome, resizable panel). Clipboard paste not yet explicitly confirmed |
 | OpenAI provider | Experimental, untested |
 | Claude provider, image/screen understanding, hosting, accounts | Not implemented |
 
@@ -59,7 +72,7 @@ Permissions: `INTERNET`, `SYSTEM_ALERT_WINDOW` (floating button), foreground ser
 
 ## API
 
-`GET /health` -> `{"status":"ok","project":"HAMO AI","version":"0.2.0","provider":"gemini"}`
+`GET /health` -> `{"status":"ok","project":"HAMO AI","version":"1.0.0","provider":"gemini"}`
 
 `POST /api/chat` (`Content-Type: application/json`, body up to 64 KB)
 
@@ -103,3 +116,11 @@ bash tests/run_all.sh        # backend (unittest) + Markdown (Node, optional)
 ## Roadmap
 
 See [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md).
+
+## Enabling the live demo (one-time, repo owner only)
+
+GitHub Pages is off by default on a new repo. To turn on the demo link above: **Settings -> Pages -> Source: "Deploy from a branch" -> Branch: `main`, folder: `/docs` -> Save.** It publishes in a minute or two at `https://<username>.github.io/HAMO_AI/`.
+
+## License
+
+[MIT](LICENSE) -- see [CONTRIBUTING.md](CONTRIBUTING.md) to propose a change.

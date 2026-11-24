@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" width="640" height="160" role="img" aria-label="HAMO AI">
+  <defs>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7d8fff"/>
+      <stop offset="1" stop-color="#4458e6"/>
+    </linearGradient>
+    <style>
+      /* Readable on GitHub's light theme by default; switches for readers in dark mode. */
+      .title { fill: #1b2438; }
+      .subtitle { fill: #4b5567; }
+      @media (prefers-color-scheme: dark) {
+        .title { fill: #eef1f8; }
+        .subtitle { fill: #9aa5bd; }
+      }
+    </style>
+  </defs>
+  <rect x="4" y="24" width="112" height="112" rx="28" fill="url(#mark)"/>
+  <path d="M42 56h14v22h28V56h14v48h-14v-22H56v22H42z" fill="#ffffff"/>
+  <text x="138" y="88" class="title" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+        font-size="46" font-weight="700">HAMO AI</text>
+  <text x="140" y="116" class="subtitle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+        font-size="18">Arabic educational assistant for Android</text>
+</svg>

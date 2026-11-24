@@ -27,6 +27,7 @@ with sync_playwright() as p:
     page.wait_for_selector("#conn-text:has-text('متصل بالخادم')")
     check("health dot online", "on" in page.get_attribute("#dot", "class"))
     check("close button hidden outside the app", not page.is_visible("#close-panel"))
+    check("resize button hidden outside the app", not page.is_visible("#resize-panel"))
     check("6 mode chips", page.locator(".mode").count() == 6)
     page.screenshot(path=f"{SHOTS}/1_welcome.png")
 
@@ -103,6 +104,8 @@ with sync_playwright() as p:
       window.HamoNative = {
         getClipboardText: () => 'نص من الحافظة الأصلية',
         copyText: (t) => { window.__log.push('copy:' + t.slice(0, 5)); return true; },
+        canResize: () => true,
+        cycleSize: () => window.__log.push('resize'),
         closePanel: () => window.__log.push('close')
       };""")
     n = ctx2.new_page()
@@ -114,9 +117,11 @@ with sync_playwright() as p:
     n.click("#send-button")
     n.wait_for_selector(".msg.ai")
     n.click(".msg.ai .copy")
+    check("resize button visible in panel", n.is_visible("#resize-panel"))
+    n.click("#resize-panel")
     n.click("#close-panel")
     log = n.evaluate("window.__log")
-    check("native copy + close called", any(x.startswith("copy:") for x in log) and "close" in log)
+    check("native copy + resize + close called", any(x.startswith("copy:") for x in log) and "resize" in log and "close" in log)
     n.screenshot(path=f"{SHOTS}/4_native_panel.png")
     b.close()
 

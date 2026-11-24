@@ -1,12 +1,12 @@
 # دليل التشغيل (من الهاتف فقط)
 
 ## ١) تحديث المشروع في Termux
-بعد تنزيل `HAMO_AI_v0.2.0.zip` إلى مجلد التنزيلات:
+بعد تنزيل `HAMO_AI_v1.0.0.zip` إلى مجلد التنزيلات:
 
 ```bash
 termux-setup-storage            # مرة واحدة فقط، ووافق على الإذن
 cd ~/HAMO_AI
-unzip -o ~/storage/downloads/HAMO_AI_v0.2.0.zip
+unzip -o ~/storage/downloads/HAMO_AI_v1.0.0.zip
 rm -f backend/requiremuvicorno  # ملف زائد غير مستخدم (اختياري)
 bash tests/run_all.sh           # يجب أن ترى OK
 bash start.sh
@@ -22,7 +22,7 @@ bash start.sh
 pkg install -y git gh
 cd ~/HAMO_AI
 git add -A
-git commit -m "HAMO AI v0.2.0: educational modes, hardened backend, Android app"
+git commit -m "HAMO AI v1.0.0: educational modes, hardened backend, Android app"
 gh auth login        # GitHub.com > HTTPS > Login with a web browser
 gh repo create HAMO_AI --private --source=. --remote=origin --push
 ```

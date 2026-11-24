@@ -19,7 +19,7 @@ from urllib.parse import unquote, urlsplit
 from chat import ChatError, parse_request, run_chat
 from providers import ProviderError, active_provider_name
 
-VERSION = "0.2.0"
+VERSION = "1.0.0"
 PROJECT = "HAMO AI"
 HOST = os.getenv("HAMO_HOST", "127.0.0.1")
 PORT = int(os.getenv("HAMO_PORT", "8000"))

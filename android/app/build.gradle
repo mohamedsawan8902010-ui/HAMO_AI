@@ -14,7 +14,7 @@ android {
         minSdk 26
         targetSdk 34
         versionCode ciVersionCode
-        versionName '0.2.0'
+        versionName '1.0.0'
     }
 
     // A fixed DEBUG key (public password, not a secret) so new builds install over old ones.

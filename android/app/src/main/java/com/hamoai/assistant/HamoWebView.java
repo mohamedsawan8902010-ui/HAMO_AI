@@ -15,7 +15,7 @@ import java.util.Objects;
 final class HamoWebView {
     private HamoWebView() {}
 
-    static WebView create(Context context, String serverUrl, Runnable onClose) {
+    static WebView create(Context context, String serverUrl, Runnable onClose, Runnable onResize) {
         Context app = context.getApplicationContext();
         WebView webView = new WebView(context);
         webView.setBackgroundColor(0xFF0D1220);
@@ -28,7 +28,7 @@ final class HamoWebView {
         settings.setSupportZoom(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
 
-        webView.addJavascriptInterface(new HamoBridge(app, onClose), "HamoNative");
+        webView.addJavascriptInterface(new HamoBridge(app, onClose, onResize), "HamoNative");
         webView.setWebViewClient(new Client(app, serverUrl));
         webView.loadUrl(serverUrl);
         return webView;

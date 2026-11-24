@@ -14,11 +14,13 @@ import android.webkit.JavascriptInterface;
 final class HamoBridge {
     private final Context context;
     private final Runnable onClose;
+    private final Runnable onResize;
     private final Handler main = new Handler(Looper.getMainLooper());
 
-    HamoBridge(Context context, Runnable onClose) {
+    HamoBridge(Context context, Runnable onClose, Runnable onResize) {
         this.context = context;
         this.onClose = onClose;
+        this.onResize = onResize;
     }
 
     /** Returns the clipboard text, or "" when empty or when Android refuses the read. */
@@ -53,6 +55,19 @@ final class HamoBridge {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /** True only inside the floating panel (the in-app chat has nothing to resize). */
+    @JavascriptInterface
+    public boolean canResize() {
+        return onResize != null;
+    }
+
+    @JavascriptInterface
+    public void cycleSize() {
+        if (onResize != null) {
+            main.post(onResize);
         }
     }
 

@@ -12,7 +12,7 @@ public class ChatActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        webView = HamoWebView.create(this, Prefs.serverUrl(this), this::finish);
+        webView = HamoWebView.create(this, Prefs.serverUrl(this), this::finish, null);
         setContentView(webView);
     }
 

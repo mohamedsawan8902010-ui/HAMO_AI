@@ -38,11 +38,14 @@ public class OverlayService extends Service {
     static final String ACTION_STOP = "com.hamoai.assistant.STOP";
     private static final String CHANNEL_ID = "hamo_overlay";
     private static final int NOTIFICATION_ID = 1001;
+    // Panel height as a share of the screen: small, medium, large.
+    private static final float[] PANEL_HEIGHTS = {0.35f, 0.55f, 0.85f};
 
     private WindowManager windowManager;
     private TextView bubble;
     private WindowManager.LayoutParams bubbleParams;
     private FrameLayout panel;
+    private WindowManager.LayoutParams panelParams;
     private WebView webView;
 
     @Override
@@ -207,7 +210,7 @@ public class OverlayService extends Service {
         ContextThemeWrapper themed = new ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault);
 
         if (webView == null) {
-            webView = HamoWebView.create(themed, Prefs.serverUrl(this), this::hidePanel);
+            webView = HamoWebView.create(themed, Prefs.serverUrl(this), this::hidePanel, this::cyclePanelSize);
         }
         webView.onResume();
 
@@ -232,18 +235,18 @@ public class OverlayService extends Service {
         panel.addView(webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-        int width = Math.min(screen.widthPixels - dp(16), dp(520));
-        int height = (int) (screen.heightPixels * 0.55f);
         // No FLAG_NOT_FOCUSABLE: the panel needs the keyboard and the clipboard.
         // FLAG_NOT_TOUCH_MODAL: taps outside the panel still reach the page underneath.
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                width, height,
+                0, 0,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
+        sizePanelParams(params);
         params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
         params.y = dp(36);
         params.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        panelParams = params;
 
         try {
             windowManager.addView(panel, params);
@@ -252,6 +255,25 @@ public class OverlayService extends Service {
             panel.removeAllViews();
             panel = null;
             Toast.makeText(this, "تعذر فتح نافذة المساعد", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void sizePanelParams(WindowManager.LayoutParams params) {
+        DisplayMetrics screen = getResources().getDisplayMetrics();
+        params.width = Math.min(screen.widthPixels - dp(16), dp(520));
+        params.height = (int) (screen.heightPixels * PANEL_HEIGHTS[Prefs.panelSize(this)]);
+    }
+
+    /** Small -> medium -> large -> small ... (the choice is remembered). */
+    private void cyclePanelSize() {
+        Prefs.savePanelSize(this, (Prefs.panelSize(this) + 1) % PANEL_HEIGHTS.length);
+        if (panel != null && panelParams != null) {
+            sizePanelParams(panelParams);
+            try {
+                windowManager.updateViewLayout(panel, panelParams);
+            } catch (Exception ignored) {
+                // Panel was just closed.
+            }
         }
     }
 
@@ -266,6 +288,7 @@ public class OverlayService extends Service {
         }
         panel.removeAllViews();
         panel = null;
+        panelParams = null;
         if (webView != null) {
             webView.onPause();
         }

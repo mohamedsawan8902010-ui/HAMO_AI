@@ -22,7 +22,7 @@
         chat: $("chat"), messages: $("messages"), welcome: $("welcome"),
         form: $("chat-form"), input: $("message-input"), send: $("send-button"),
         paste: $("paste-button"), modes: $("modes"), dot: $("dot"),
-        connText: $("conn-text"), newChat: $("new-chat"), close: $("close-panel"),
+        connText: $("conn-text"), newChat: $("new-chat"), close: $("close-panel"), resize: $("resize-panel"),
         toast: $("toast")
     };
 
@@ -344,6 +344,10 @@
     el.newChat.addEventListener("click", resetChat);
 
     if (NATIVE) {
+        if (typeof window.HamoNative.canResize === "function" && window.HamoNative.canResize()) {
+            el.resize.hidden = false;
+            el.resize.addEventListener("click", () => window.HamoNative.cycleSize());
+        }
         el.close.hidden = false;
         el.close.addEventListener("click", () => window.HamoNative.closePanel());
     }
